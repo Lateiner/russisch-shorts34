@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Satzbau-Baukasten</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button.control-btn {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button.control-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .progress-box {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: bold;
+            align-self: flex-end;
+        }
+
+        /* Der Bereich, in dem der Satz aufgebaut wird */
+        .sentence-board {
+            background: #f8fafc;
+            border: 2px dashed #e2e8f0;
+            min-height: 80px;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Die Wort-Bausteine */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            min-height: 100px;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+
+        .word-block {
+            background: white;
+            color: var(--text-color);
+            border: 2px solid #cbd5e1;
+            padding: 10px 18px;
+            font-size: 1.15rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .word-block:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Zustandsklassen für direktes Feedback */
+        .word-block.placed {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            cursor: default;
+            transform: none;
+        }
+
+        .word-block.shake {
+            animation: shake 0.3s ease-in-out;
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            min-height: 35px;
+        }
+
+        /* Fehler-Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        @media (min-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .word-block { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Übung: Satzbau-Baukasten</h1>
+        <p class="instruction">Klicke die Wortbausteine in der richtigen Reihenfolge an, um den Satz zu bilden. Ignoriere falsche Formen!</p>
+    </header>
+
+    <div class="controls">
+        <button class="control-btn" id="reset-btn">Neustart</button>
+    </div>
+
+    <div class="game-container">
+        <div class="progress-box" id="progress">Satz 1 von 5</div>
+        
+        <!-- Hier entsteht der korrekte Satz -->
+        <div class="sentence-board" id="sentence-board"></div>
+
+        <!-- Hier liegen alle auswählbaren Wörter (richtige & falsche) -->
+        <div class="word-pool" id="word-pool"></div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        // 5 verschiedene Sätze mit eingebauten grammatikalischen Stolpersteinen
+        const tasks = [
+            {
+                correctOrder: ["Вчера", "он", "женился", "на", "Маше."],
+                distractors: ["вышла", "замуж", "за", "Машу."]
+            },
+            {
+                correctOrder: ["Вчера", "она", "вышла", "замуж", "за", "Мишу."],
+                distractors: ["женился", "на", "Мише."]
+            },
+            {
+                correctOrder: ["Иван", "женился", "на", "Анне."],
+                distractors: ["вышел", "замуж", "за", "Анну."]
+            },
+            {
+                correctOrder: ["Елена", "вышла", "замуж", "за", "Максима."],
+                distractors: ["женилась", "на", "Максиме."]
+            },
+            {
+                correctOrder: ["Вчера", "они", "поженились", "в", "Москве."],
+                distractors: ["женился", "вышла", "замуж"]
+            }
+        ];
+
+        let currentTaskIndex = 0;
+        let currentWordIndex = 0; // Welches Wort der korrekten Reihenfolge wird gerade gesucht?
+
+        const sentenceBoard = document.getElementById('sentence-board');
+        const wordPool = document.getElementById('word-pool');
+        const feedback = document.getElementById('feedback');
+        const progress = document.getElementById('progress');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function initGame() {
+            currentTaskIndex = 0;
+            loadTask();
+        }
+
+        function loadTask() {
+            currentWordIndex = 0;
+            feedback.textContent = "";
+            sentenceBoard.innerHTML = "";
+            wordPool.innerHTML = "";
+            progress.textContent = `Satz ${currentTaskIndex + 1} von ${tasks.length}`;
+
+            const task = tasks[currentTaskIndex];
+            
+            // Kombiniere richtige Wörter und Ablenker (Distraktoren)
+            const allWords = [...task.correctOrder, ...task.distractors];
+            
+            // Wörter zufällig mischen
+            allWords.sort(() => Math.random() - 0.5);
+
+            // Bausteine im Pool erstellen
+            allWords.forEach((word, index) => {
+                const block = document.createElement('div');
+                block.classList.add('word-block');
+                block.textContent = word;
+                // Eindeutige ID vergeben, um identische Wörter unterscheidbar zu machen
+                block.dataset.index = index; 
+                
+                block.addEventListener('click', () => handleWordClick(block, word));
+                wordPool.appendChild(block);
+            });
+        }
+
+        function handleWordClick(block, word) {
+            // Wenn das Wort bereits richtig platziert wurde, tue nichts
+            if (block.classList.contains('placed')) return;
+
+            const task = tasks[currentTaskIndex];
+            const expectedWord = task.correctOrder[currentWordIndex];
+
+            // Direktes Feedback
+            if (word === expectedWord) {
+                // Richtiges Wort geklickt!
+                block.classList.add('placed');
+                feedback.textContent = "Richtig! 👍";
+                feedback.style.color = "var(--success-color)";
+                
+                // Wort oben im Board anzeigen
+                const placedBlock = document.createElement('div');
+                placedBlock.classList.add('word-block', 'placed');
+                placedBlock.textContent = word;
+                sentenceBoard.appendChild(placedBlock);
+
+                currentWordIndex++;
+
+                // Prüfen, ob der Satz vollständig ist
+                if (currentWordIndex === task.correctOrder.length) {
+                    feedback.textContent = "Perfekt! Satz komplett gelöst! 🎉";
+                    
+                    // Nach kurzer Verzögerung zum nächsten Satz wechseln
+                    setTimeout(() => {
+                        currentTaskIndex++;
+                        if (currentTaskIndex < tasks.length) {
+                            loadTask();
+                        } else {
+                            progress.textContent = "Beendet";
+                            feedback.textContent = "Super! Du hast alle 5 Sätze fehlerfrei gebaut! 🏆";
+                            feedback.style.color = "var(--success-color)";
+                            wordPool.innerHTML = "";
+                        }
+                    }, 1500);
+                }
+            } else {
+                // Falsches Wort geklickt! (Direktes negatives Feedback)
+                feedback.textContent = "Das passt hier nicht. Achte auf das Subjekt, die Präposition oder den Fall! ❌";
+                feedback.style.color = "var(--error-color)";
+                
+                block.classList.add('shake');
+                setTimeout(() => {
+                    block.classList.remove('shake');
+                }, 300);
+            }
+        }
+
+        resetBtn.addEventListener('click', initGame);
+
+        // Spiel direkt beim Laden starten
+        window.onload = initGame;
+    </script>
+</body>
+</html>
