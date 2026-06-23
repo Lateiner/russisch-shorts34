@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Fehler-Suchbild</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .text-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 700px;
+            width: 100%;
+            line-height: 2.2;
+            font-size: 1.3rem;
+            text-align: justify;
+        }
+
+        /* Jedes Wort wird als Klick-Bereich definiert */
+        .word {
+            padding: 2px 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        .word:hover {
+            background-color: #edf2f7;
+        }
+
+        /* Fehler, wenn gefunden */
+        .word.error-found {
+            background-color: var(--error-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Feedback-Styles */
+        #status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        button {
+            margin-top: 20px;
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #7f8c8d;
+        }
+
+        @media (min-width: 600px) {
+            .text-container { font-size: 1.5rem; padding: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Fehler-Suchbild: Hochzeit</h1>
+        <p>Klicke im Text auf die 3 Grammatikfehler!</p>
+    </header>
+
+    <div class="text-container" id="text-container"></div>
+
+    <div id="status">Gefundene Fehler: 0 von 3</div>
+    
+    <button id="reset-btn">Neustart</button>
+
+    <script>
+        // Der Text mit Fehler-Markierung
+        const fullText = [
+            { word: "Вчера", isError: false },
+            { word: "Иван", isError: false },
+            { word: "женился", isError: false },
+            { word: "на", isError: false },
+            { word: "Анне.", isError: false },
+            { word: "Это", isError: false },
+            { word: "было", isError: false },
+            { word: "красиво.", isError: false },
+            { word: "Но", isError: false },
+            { word: "Пётр", isError: false },
+            { word: "сказал:", isError: false },
+            { word: "«Я", isError: false },
+            { word: "вышел", isError: true }, // Fehler 1
+            { word: "замуж", isError: false },
+            { word: "за", isError: false },
+            { word: "Марию».", isError: false },
+            { word: "Потом", isError: false },
+            { word: "пришла", isError: false },
+            { word: "Елена.", isError: false },
+            { word: "Она", isError: false },
+            { word: "очень", isError: false },
+            { word: "счастлива,", isError: false },
+            { word: "потому", isError: false },
+            { word: "что", isError: false },
+            { word: "она", isError: false },
+            { word: "женилась", isError: true }, // Fehler 2
+            { word: "на", isError: false },
+            { word: "Иване.", isError: false },
+            { word: "А", isError: false },
+            { word: "Иван", isError: false },
+            { word: "и", isError: false },
+            { word: "Анна", isError: false },
+            { word: "просто", isError: false },
+            { word: "поженились.", isError: false },
+            { word: "А", isError: false },
+            { word: "Сергей", isError: false },
+            { word: "женился", isError: false },
+            { word: "за", isError: true }, // Fehler 3
+            { word: "Елену.", isError: false }
+        ];
+
+        let foundErrors = 0;
+        const textContainer = document.getElementById('text-container');
+        const statusDisplay = document.getElementById('status');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function renderText() {
+            textContainer.innerHTML = "";
+            foundErrors = 0;
+            statusDisplay.textContent = "Gefundene Fehler: 0 von 3";
+            
+            fullText.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.textContent = item.word + " ";
+                span.className = "word";
+                span.dataset.error = item.isError;
+                span.dataset.found = "false";
+                
+                span.addEventListener('click', function() {
+                    if (this.dataset.found === "true") return;
+
+                    if (this.dataset.error === "true") {
+                        this.classList.add('error-found');
+                        this.dataset.found = "true";
+                        foundErrors++;
+                        statusDisplay.textContent = `Gefundene Fehler: ${foundErrors} von 3`;
+                        
+                        if (foundErrors === 3) {
+                            statusDisplay.textContent = "Glückwunsch! Du hast alle Fehler gefunden! 🎉";
+                            statusDisplay.style.color = "var(--success-color)";
+                        }
+                    } else {
+                        // Feedback für korrektes Wort (nur visuell kurz)
+                        this.style.backgroundColor = "#e8f8f0";
+                        setTimeout(() => this.style.backgroundColor = "transparent", 300);
+                    }
+                });
+                textContainer.appendChild(span);
+            });
+        }
+
+        resetBtn.addEventListener('click', renderText);
+        window.onload = renderText;
+    </script>
+</body>
+</html>
