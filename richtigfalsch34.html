@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Swipe-Quiz (Richtig oder Falsch?)</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        p.instruction {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button.reset-btn {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* SPIELFELD & KARTENCONTAINER */
+        .game-viewport {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            height: 400px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            cursor: grab;
+            user-select: none;
+            touch-action: none; /* Deaktiviert das native Scrollen beim Swipen */
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .swipe-card:active {
+            cursor: grabbing;
+        }
+
+        .card-emoji {
+            font-size: 4rem;
+        }
+
+        .card-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            word-break: break-word;
+            margin: 20px 0;
+        }
+
+        .progress-indicator {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* BUTTONS FÜR DESKTOP / ALTERNATIVSTEUERUNG */
+        .action-buttons {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 15px;
+        }
+
+        .btn-swipe {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-swipe:active {
+            transform: scale(0.92);
+        }
+
+        .btn-wrong {
+            background-color: var(--error-color);
+        }
+
+        .btn-correct {
+            background-color: var(--success-color);
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            height: 35px;
+            max-width: 90%;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (min-width: 600px) {
+            h1 { font-size: 2rem; }
+            .game-viewport { height: 440px; max-width: 420px; }
+            .card-text { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Übung: Swipe-Quiz</h1>
+        <p class="instruction">Ist der russische Satz korrekt? Wische nach <b>rechts (Richtig)</b> oder nach <b>links (Falsch)</b>. Am Desktop kannst du auch die Buttons oder Pfeiltasten nutzen!</p>
+    </header>
+
+    <div class="controls">
+        <button class="reset-btn" id="reset-btn">Neustart</button>
+    </div>
+
+    <!-- Hier wird die jeweils aktuelle Karte gerendert -->
+    <div class="game-viewport" id="game-viewport"></div>
+
+    <div class="action-buttons">
+        <button class="btn-swipe btn-wrong" id="btn-wrong" title="Falsch (Pfeiltaste links)">❌</button>
+        <button class="btn-swipe btn-correct" id="btn-correct" title="Richtig (Pfeiltaste rechts)"> Foster 👍 </button>
+    </div>
+
+    <div id="feedback"></div>
+
+    <script>
+        // Button-Text Fix für Emojis im Code-Editor
+        document.getElementById('btn-correct').textContent = "👍";
+
+        // Quiz-Datensatz (Sätze und ihr tatsächlicher Wahrheitsgehalt)
+        const quizData = [
+            { text: "Вчера он женился на Маше.", isCorrect: true, emoji: "🤵‍♂️" },
+            { text: "Она вышла замуж за Мишу.", isCorrect: true, emoji: "👰‍♀️" },
+            { text: "Вчера они поженились.", isCorrect: true, emoji: "👩‍❤️‍👨" },
+            { text: "Она женилась на Мишу.", isCorrect: false, emoji: "❌" }, // Falsch: Eine Frau "вышла замуж за"
+            { text: "Иван вышел замуж за Анну.", isCorrect: false, emoji: "❌" }, // Falsch: Ein Mann "женился на"
+            { text: "Вчера они поженились на Маше.", isCorrect: false, emoji: "❌" } // Falsch: "поженились" braucht kein Objekt
+        ];
+
+        let cardsPool = [];
+        let currentCardIndex = 0;
+        let isAnimating = false;
+
+        // Touch-Tracking Variablen
+        let startX = 0;
+        let currentX = 0;
+        let activeCardElement = null;
+
+        const viewport = document.getElementById('game-viewport');
+        const resetBtn = document.getElementById('reset-btn');
+        const feedback = document.getElementById('feedback');
+        const btnWrong = document.getElementById('btn-wrong');
+        const btnCorrect = document.getElementById('btn-correct');
+
+        function initGame() {
+            feedback.textContent = "";
+            viewport.innerHTML = "";
+            currentCardIndex = 0;
+            isAnimating = false;
+            
+            // Pool kopieren und mischen
+            cardsPool = [...quizData].sort(() => Math.random() - 0.5);
+            
+            renderCurrentCard();
+        }
+
+        function renderCurrentCard() {
+            if (currentCardIndex >= cardsPool.length) {
+                viewport.innerHTML = "";
+                feedback.textContent = "Ausgezeichnet! Du hast das Swipe-Quiz komplett beendet! 🏆";
+                feedback.style.color = "var(--success-color)";
+                return;
+            }
+
+            viewport.innerHTML = "";
+            const data = cardsPool[currentCardIndex];
+
+            const card = document.createElement('div');
+            card.classList.add('swipe-card');
+            
+            const emoji = document.createElement('div');
+            emoji.classList.add('card-emoji');
+            emoji.textContent = data.emoji;
+
+            const text = document.createElement('div');
+            text.classList.add('card-text');
+            text.textContent = data.text;
+
+            const progress = document.createElement('div');
+            progress.classList.add('progress-indicator');
+            progress.textContent = `Karte ${currentCardIndex + 1} von ${cardsPool.length}`;
+
+            card.appendChild(emoji);
+            card.appendChild(text);
+            card.appendChild(progress);
+
+            // Touch Event-Listener registrieren
+            card.addEventListener('touchstart', handleTouchStart, { passive: true });
+            card.addEventListener('touchmove', handleTouchMove, { passive: false });
+            card.addEventListener('touchend', handleTouchEnd);
+
+            viewport.appendChild(card);
+            activeCardElement = card;
+        }
+
+        // --- SWIPE LOGIK (TOUCH EVENTS) ---
+        function handleTouchStart(e) {
+            if (isAnimating) return;
+            startX = e.touches[0].clientX;
+            currentX = startX;
+        }
+
+        function handleTouchMove(e) {
+            if (isAnimating || !activeCardElement) return;
+            currentX = e.touches[0].clientX;
+            const deltaX = currentX - startX;
+            
+            // Karte leicht mitbewegen und rotieren (Dating-App Effekt)
+            activeCardElement.style.transform = `translateX(${deltaX}px) rotate(${deltaX * 0.05}deg)`;
+            
+            // Verhindert vertikales Scrollen der Seite während des Swipens
+            if (Math.abs(deltaX) > 10) {
+                e.preventDefault();
+            }
+        }
+
+        function handleTouchEnd() {
+            if (isAnimating || !activeCardElement) return;
+            const deltaX = currentX - startX;
+            const swipeThreshold = 120; // Ab dieser Pixel-Anzahl gilt es als Swipe
+
+            if (deltaX > swipeThreshold) {
+                // Nach rechts geschwappt
+                processAnswer(true, 'right');
+            } else if (deltaX < -swipeThreshold) {
+                // Nach links geschwappt
+                processAnswer(false, 'left');
+            } else {
+                // Zurück in die Mitte schnappen lassen
+                activeCardElement.style.transform = '';
+            }
+        }
+
+        // --- AUSWERTUNG & ANIMATION ---
+        function processAnswer(userChoice, direction) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const currentData = cardsPool[currentCardIndex];
+            const isCorrectAnswer = (userChoice === currentData.isCorrect);
+
+            // Feedback-Ausgabe
+            if (isCorrectAnswer) {
+                feedback.textContent = "Richtig! ✨";
+                feedback.style.color = "var(--success-color)";
+            } else {
+                feedback.textContent = "Leider falsch! ❌";
+                feedback.style.color = "var(--error-color)";
+            }
+
+            // Karte aus dem Bildschirm fliegen lassen
+            const flyX = direction === 'right' ? window.innerWidth : -window.innerWidth;
+            activeCardElement.style.transform = `translateX(${flyX}px) rotate(${flyX * 0.03}deg)`;
+            activeCardElement.style.opacity = '0';
+
+            currentCardIndex++;
+
+            // Nächste Karte vorbereiten
+            setTimeout(() => {
+                isAnimating = false;
+                renderCurrentCard();
+            }, 300);
+        }
+
+        // --- ALTERNATIVSTEUERUNGEN (BUTTONS & TASTATUR) ---
+        btnWrong.addEventListener('click', () => {
+            if (!isAnimating && activeCardElement) processAnswer(false, 'left');
+        });
+
+        btnCorrect.addEventListener('click', () => {
+            if (!isAnimating && activeCardElement) processAnswer(true, 'right');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (isAnimating || !activeCardElement) return;
+            if (e.key === 'ArrowLeft') {
+                processAnswer(false, 'left');
+            } else if (e.key === 'ArrowRight') {
+                processAnswer(true, 'right');
+            }
+        });
+
+        resetBtn.addEventListener('click', initGame);
+
+        // Direkt beim Aufrufen initialisieren
+        window.onload = initGame;
+    </script>
+</body>
+</html>
