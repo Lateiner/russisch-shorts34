@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Hörverstehen mit Bildern</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .reset-btn {
+            background-color: #95a5a6;
+        }
+
+        .reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        .next-btn {
+            background-color: #e67e22;
+            display: none; /* Wird erst nach Beantwortung eingeblendet */
+        }
+
+        .next-btn:hover {
+            background-color: #d35400;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* Dynamisches Bild passend zum Satz */
+        .sentence-image-box {
+            font-size: 5rem;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .audio-box {
+            text-align: center;
+            width: 100%;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+
+        .play-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+        }
+
+        .audio-label {
+            margin-top: 8px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-card {
+            border: 3px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            user-select: none;
+        }
+
+        .option-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .option-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .option-card.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+        }
+
+        .option-card.wrong {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: bold;
+            height: 35px;
+            text-align: center;
+        }
+
+        @media (min-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .options-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .game-container { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Übung: Hörverstehen</h1>
+        <p class="instruction">Klicke auf den Play-Button, höre dir den russischen Satz an und wähle das passende Bild aus.</p>
+    </header>
+
+    <div class="controls">
+        <button class="reset-btn" id="reset-btn">Neustart</button>
+        <button class="next-btn" id="next-btn">Nächster Satz ➔</button>
+    </div>
+
+    <div class="game-container">
+        <!-- Das Bild, das sich je nach Satz verändert -->
+        <div class="sentence-image-box" id="sentence-image">❓</div>
+
+        <div class="audio-box">
+            <button class="play-btn" id="play-btn">▶</button>
+            <span class="audio-label">Satz anhören</span>
+        </div>
+
+        <div class="options-grid">
+            <div class="option-card" data-answer="mann">
+                <span class="option-icon">🤵‍♂️</span>
+                <span class="option-title">Ein Mann heiratet</span>
+            </div>
+            <div class="option-card" data-answer="frau">
+                <span class="option-icon">👰‍♀️</span>
+                <span class="option-title">Eine Frau heiratet</span>
+            </div>
+            <div class="option-card" data-answer="paar">
+                <span class="option-icon">👩‍❤️‍👨</span>
+                <span class="option-title">Ein Paar heiratet</span>
+            </div>
+        </div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        // Die 3 Sätze, jeweils mit individuellem Bild (Emoji) verknüpft
+        const audioData = [
+            { text: "Иван женился на Анне.", category: "mann", gender: "male", image: "🧔‍♂️💍" },
+            { text: "Елена вышла замуж за Максима.", category: "frau", gender: "female", image: "👩‍🦰💐" },
+            { text: "Вчера они поженились.", category: "paar", gender: "neutral", image: "🏰🥂" }
+        ];
+
+        let currentTask = null;
+        let isAnswered = false;
+        let taskPool = [];
+
+        const playBtn = document.getElementById('play-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedback = document.getElementById('feedback');
+        const sentenceImage = document.getElementById('sentence-image');
+        const optionCards = document.querySelectorAll('.option-card');
+
+        // Startet das Spiel komplett neu und füllt/mischt den Pool
+        function restartGame() {
+            taskPool = [...audioData].sort(() => Math.random() - 0.5);
+            loadNextTask();
+        }
+
+        // Lädt die nächste Aufgabe aus dem Pool
+        function loadNextTask() {
+            isAnswered = false;
+            feedback.textContent = "";
+            nextBtn.style.display = "none";
+            
+            optionCards.forEach(card => {
+                card.className = "option-card";
+            });
+
+            if (taskPool.length === 0) {
+                feedback.textContent = "Hervorragend! Du hast alle Sätze durchgearbeitet! 🎉";
+                feedback.style.color = "var(--success-color)";
+                sentenceImage.textContent = "🏆";
+                currentTask = null;
+                return;
+            }
+
+            // Holt das nächste Element aus der Warteschlange
+            currentTask = taskPool.pop();
+            
+            // Setzt das spezifische Bild für diesen Satz
+            sentenceImage.textContent = currentTask.image;
+            
+            playAudio();
+        }
+
+        function playAudio() {
+            if (!currentTask) return;
+            
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(currentTask.text);
+            utterance.lang = 'ru-RU';
+
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = voices.find(voice => voice.lang.startsWith('ru'));
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            if (currentTask.gender === 'male') {
+                utterance.pitch = 0.8;
+            } else if (currentTask.gender === 'female') {
+                utterance.pitch = 1.2;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        optionCards.forEach(card => {
+            card.addEventListener('click', function() {
+                if (isAnswered || !currentTask) return;
+
+                const chosenCategory = this.getAttribute('data-answer');
+                isAnswered = true;
+
+                if (chosenCategory === currentTask.category) {
+                    this.classList.add('correct');
+                    feedback.textContent = "Richtig! 🎉";
+                    feedback.style.color = "var(--success-color)";
+                } else {
+                    this.classList.add('wrong');
+                    feedback.textContent = "Leider falsch! ❌";
+                    feedback.style.color = "var(--error-color)";
+                    
+                    document.querySelector(`[data-answer="${currentTask.category}"]`).classList.add('correct');
+                }
+
+                // Blendet den Button für den nächsten Satz ein
+                nextBtn.style.display = "block";
+            });
+        });
+
+        playBtn.addEventListener('click', playAudio);
+        resetBtn.addEventListener('click', restartGame);
+        nextBtn.addEventListener('click', loadNextTask);
+
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = restartGame;
+        } else {
+            window.onload = restartGame;
+        }
+    </script>
+</body>
+</html>
