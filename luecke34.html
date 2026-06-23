@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Lückentext (Heiraten)</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 20px;
+        }
+
+        /* Styling für den russischen Textblock */
+        .story-text {
+            font-size: 1.25rem;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .sentence-block {
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* Styling für die Dropdown-Menüs */
+        select {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #fff;
+            color: var(--text-color);
+            cursor: pointer;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+            outline: none;
+            max-width: 100%;
+        }
+
+        select:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Status-Klassen für die Auswertung */
+        select.correct-answer {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+            color: #27ae60;
+        }
+
+        select.wrong-answer {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+            color: #c0392b;
+        }
+
+        /* Buttons & Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            max-width: 700px;
+            margin-top: 10px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #check-btn {
+            background-color: var(--success-color);
+        }
+
+        #check-btn:hover {
+            background-color: #27ae60;
+        }
+
+        #reset-btn {
+            background-color: #95a5a6;
+        }
+
+        #reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Feedback-Meldung */
+        #feedback {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 30px;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (min-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .container { padding: 40px; }
+            .story-text { font-size: 1.4rem; }
+            select { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Übung: Wer heiratet wen? (Lückentext)</h1>
+        <p class="instruction">Wähle für jede Lücke das grammatikalisch passende Verb aus. Achte genau auf das Subjekt!</p>
+    </header>
+
+    <div class="container">
+        <div class="story-text">
+            <!-- Satz 1 -->
+            <span class="sentence-block">
+                1. Привет! Мой брат Иван вчера 
+                <select class="cloze-select" data-answer="женился">
+                    <option value="">...</option>
+                    <option value="женился">женился</option>
+                    <option value="вышла замуж">вышла замуж</option>
+                    <option value="поженились">поженились</option>
+                </select> 
+                на Маше.
+            </span>
+
+            <!-- Satz 2 -->
+            <span class="sentence-block">
+                2. Моя сестра Елена тоже счастлива. Она 
+                <select class="cloze-select" data-answer="вышла замуж">
+                    <option value="">...</option>
+                    <option value="женился">женился</option>
+                    <option value="вышла замуж">вышла замуж</option>
+                    <option value="поженились">поженились</option>
+                </select> 
+                за Максима.
+            </span>
+
+            <!-- Satz 3 -->
+            <span class="sentence-block">
+                3. Мы все очень рады за них. Вчера они 
+                <select class="cloze-select" data-answer="поженились">
+                    <option value="">...</option>
+                    <option value="женился">женился</option>
+                    <option value="вышла замуж">вышла замуж</option>
+                    <option value="поженились">поженились</option>
+                </select> 
+                в Москве!
+            </span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="check-btn">Prüfen</button>
+        <button id="reset-btn">Neustart</button>
+    </div>
+
+    <div id="feedback"></div>
+
+    <script>
+        const checkBtn = document.getElementById('check-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const feedback = document.getElementById('feedback');
+        const dropdowns = document.querySelectorAll('.cloze-select');
+
+        // Funktion zum Überprüfen der Antworten
+        function checkAnswers() {
+            let correctCount = 0;
+            let totalCount = dropdowns.length;
+            let unanswered = false;
+
+            dropdowns.forEach(select => {
+                const selectedValue = select.value;
+                const correctAnswer = select.getAttribute('data-answer');
+
+                // Prüfen, ob überhaupt etwas ausgewählt wurde
+                if (selectedValue === "") {
+                    unanswered = true;
+                    select.className = "cloze-select"; // Zurücksetzen auf Standard-Stil bei fehlender Auswahl
+                } else if (selectedValue === correctAnswer) {
+                    select.className = "cloze-select correct-answer";
+                    correctCount++;
+                } else {
+                    select.className = "cloze-select wrong-answer";
+                }
+            });
+
+            // Feedback-Texte ausgeben
+            if (unanswered) {
+                feedback.textContent = "Bitte fülle zuerst alle Lücken aus! ⚠️";
+                feedback.style.color = "var(--text-color)";
+            } else if (correctCount === totalCount) {
+                feedback.textContent = "Hervorragend! Alles ist absolut richtig! 🎉";
+                feedback.style.color = "var(--success-color)";
+            } else {
+                feedback.textContent = `Noch nicht ganz richtig. Du hast ${correctCount} von ${totalCount} Lücken korrekt gelöst. Versuche es noch einmal! ❌`;
+                feedback.style.color = "var(--error-color)";
+            }
+        }
+
+        // Funktion zum Zurücksetzen der Übung (Neustart)
+        function resetGame() {
+            dropdowns.forEach(select => {
+                select.value = "";
+                select.className = "cloze-select";
+            });
+            feedback.textContent = "";
+        }
+
+        // Event-Listener hinzufügen
+        checkBtn.addEventListener('click', checkAnswers);
+        resetBtn.addEventListener('click', resetGame);
+    </script>
+</body>
+</html>
