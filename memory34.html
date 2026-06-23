@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Beziehungs-Memory</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --card-back: #34495e;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.4;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        p.instruction {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button.reset-btn {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* RESPONSIVES MEMORY GRID */
+        .memory-grid {
+            display: grid;
+            /* Smartphone Standard: 2 Spalten, 6 Zeilen */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 800px;
+            perspective: 1000px; /* Ermöglicht 3D-Effekt beim Wenden */
+        }
+
+        .memory-card {
+            background-color: transparent;
+            height: 110px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s, opacity 0.8s ease;
+        }
+
+        /* Zustand: Gefundenes Paar verschwindet langsam */
+        .memory-card.matched {
+            opacity: 0;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Kartenrückseite (Verdeckt) */
+        .card-back {
+            background-color: var(--card-back);
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        /* Kartenvorderseite (Aufgedeckt) */
+        .card-front {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transform: rotateY(180deg);
+            border: 2px solid var(--primary-color);
+        }
+
+        .card-emoji {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            min-height: 30px;
+        }
+
+        /* RESPONSIVE BREAKPOINTS */
+        
+        /* Ab Tablet-Größe (3 Spalten) */
+        @media (min-width: 480px) {
+            .memory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .card-face { font-size: 1rem; }
+        }
+
+        /* Ab Desktop-Größe (4 Spalten, 3 Zeilen) */
+        @media (min-width: 768px) {
+            h1 { font-size: 2rem; }
+            .memory-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+            }
+            .memory-card { height: 130px; }
+            .card-face { font-size: 1.1rem; }
+            .card-emoji { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Übung: Beziehungs-Memory</h1>
+        <p class="instruction">Finde die zusammenpassenden Paare (Deutsch und Russisch). Gefundene Paare lösen sich langsam auf!</p>
+    </header>
+
+    <div class="controls">
+        <button class="reset-btn" id="reset-btn">Neustart</button>
+    </div>
+
+    <div class="memory-grid" id="memory-grid"></div>
+
+    <div id="feedback"></div>
+
+    <script>
+        // Die 6 Paare (insgesamt 12 Karten)
+        const cardPairs = [
+            { id: 1, text: "Gestern hat er Mascha geheiratet.", lang: "de", emoji: "🤵‍♂️" },
+            { id: 1, text: "Вчера он женился на Маше.", lang: "ru", emoji: "🤵‍♂️" },
+            
+            { id: 2, text: "Gestern hat sie Mischa geheiratet.", lang: "de", emoji: "👰‍♀️" },
+            { id: 2, text: "Вчера она вышла замуж за Мишу.", lang: "ru", emoji: "👰‍♀️" },
+            
+            { id: 3, text: "Gestern haben sie geheiratet.", lang: "de", emoji: "👩‍❤️‍👨" },
+            { id: 3, text: "Вчера они поженились.", lang: "ru", emoji: "👩‍❤️‍¢" },
+            
+            { id: 4, text: "Ivan hat Anna geheiratet.", lang: "de", emoji: "💍" },
+            { id: 4, text: "Иван женился на Анне.", lang: "ru", emoji: "💍" },
+            
+            { id: 5, text: "Elena hat Maxim geheiratet.", lang: "de", emoji: "💐" },
+            { id: 5, text: "Елена вышла замуж за Максима.", lang: "ru", emoji: "💐" },
+            
+            { id: 6, text: "Sie wollen heiraten (als Paar).", lang: "de", emoji: "🏰" },
+            { id: 6, text: "Они хотят пожениться.", lang: "ru", emoji: "🏰" }
+        ];
+
+        let flippedCards = [];
+        let matchedPairsCount = 0;
+        let lockBoard = false;
+
+        const grid = document.getElementById('memory-grid');
+        const resetBtn = document.getElementById('reset-btn');
+        const feedback = document.getElementById('feedback');
+
+        function initGame() {
+            grid.innerHTML = "";
+            feedback.textContent = "";
+            flippedCards = [];
+            matchedPairsCount = 0;
+            lockBoard = false;
+
+            // Kartenpool kopieren und zufällig mischen
+            const shuffledCards = [...cardPairs].sort(() => Math.random() - 0.5);
+
+            // Karten im DOM erzeugen
+            shuffledCards.forEach(cardData => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                card.dataset.pairId = cardData.id;
+
+                const back = document.createElement('div');
+                back.classList.add('card-face', 'card-back');
+                back.textContent = "🇷🇺";
+
+                const front = document.createElement('div');
+                front.classList.add('card-face', 'card-front');
+                
+                const emojiSpan = document.createElement('span');
+                emojiSpan.classList.add('card-emoji');
+                emojiSpan.textContent = cardData.emoji;
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = cardData.text;
+
+                front.appendChild(emojiSpan);
+                front.appendChild(textSpan);
+                card.appendChild(back);
+                card.appendChild(front);
+
+                card.addEventListener('click', () => flipCard(card));
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (lockBoard) return;
+            if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.pairId === card2.dataset.pairId;
+
+            if (isMatch) {
+                // Paar gefunden!
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairsCount++;
+                
+                feedback.textContent = "Paar gefunden! 🎉";
+                feedback.style.color = "var(--success-color)";
+                
+                resetTurn();
+                checkWin();
+            } else {
+                // Kein Match
+                lockBoard = true;
+                feedback.textContent = "Passt leider nicht. ❌";
+                feedback.style.color = "#e74c3c";
+                
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    feedback.textContent = "";
+                    resetTurn();
+                }, 1200);
+            }
+        }
+
+        function resetTurn() {
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        function checkWin() {
+            if (matchedPairsCount === cardPairs.length / 2) {
+                setTimeout(() => {
+                    feedback.textContent = "Ausgezeichnet! Du hast alle Paare erfolgreich aufgelöst! 🏆";
+                    feedback.style.color = "var(--success-color)";
+                }, 800);
+            }
+        }
+
+        resetBtn.addEventListener('click', initGame);
+
+        // Direkt beim Laden das Spielfeld aufbauen
+        window.onload = initGame;
+    </script>
+</body>
+</html>
