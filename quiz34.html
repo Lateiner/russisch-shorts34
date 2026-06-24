@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Grammatik-Quiz</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --primary-dark: #357abd;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --muted-color: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TIMER & STATUS BAR */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .progress {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--muted-color);
+        }
+
+        .timer-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #e67e22;
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #e67e22;
+            transition: width 0.1s linear;
+        }
+
+        /* FRAGE */
+        .question-box {
+            margin-bottom: 25px;
+        }
+
+        .question-box h2 {
+            font-size: 1.3rem;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        /* ANTWORTEN (Voreinstellung Smartphone: Untereinander) */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .option-btn {
+            width: 100%;
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            text-align: left;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Daumen-freundlicher Hover nur auf Geräten, die Hover unterstützen */
+        @media (hover: hover) {
+            .option-btn:hover:not([disabled]) {
+                background-color: #edf2f7;
+                border-color: #cbd5e1;
+                transform: translateY(-1px);
+            }
+        }
+
+        /* Feedback-Zustände */
+        .option-btn.correct {
+            background-color: #d4edda !important;
+            border-color: var(--success-color) !important;
+            color: #155724 !important;
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background-color: #f8d7da !important;
+            border-color: var(--error-color) !important;
+            color: #721c24 !important;
+        }
+
+        /* HIER WIRD DIE RESPONSIVITÄT GESTEUERT */
+        /* Ab Tablet-Größe werden die Buttons kompakter im Grid angeordnet */
+        @media (min-width: 550px) {
+            .options-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .question-box h2 {
+                font-size: 1.5rem;
+            }
+            .quiz-container {
+                padding: 30px;
+            }
+        }
+
+        /* ERGEBNIS-SCREEN */
+        .result-screen {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .result-screen h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .score-text {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container" id="quiz-box">
+        <!-- Quiz Header -->
+        <div class="quiz-header">
+            <div class="progress" id="progress-text">Frage 1 von 3</div>
+            <div class="timer-box">
+                ⏱️ <span id="timer-count">15</span>s
+            </div>
+        </div>
+
+        <!-- Visueller Zeitbalken -->
+        <div class="timer-bar-container">
+            <div class="timer-bar" id="timer-bar"></div>
+        </div>
+
+        <!-- Frage Bereich -->
+        <div class="question-box">
+            <h2 id="question-text">Lädt...</h2>
+        </div>
+
+        <!-- Antwort-Buttons (Auf Mobile automatisch Full-Width) -->
+        <div class="options-container" id="options-box">
+            <!-- Buttons werden dynamisch via JavaScript generiert -->
+        </div>
+    </div>
+
+    <!-- Ergebnis-Bildschirm -->
+    <div class="quiz-container hidden" id="result-box">
+        <div class="result-screen">
+            <h2>Quiz beendet! 🏁</h2>
+            <p class="score-text" id="score-text">Du hast 0 von 3 Fragen richtig beantwortet.</p>
+            <button class="action-btn" id="restart-btn">Nochmal versuchen</button>
+        </div>
+    </div>
+
+    <script>
+        // Fragen-Pool für das Grammatik-Quiz
+        const quizData = [
+            {
+                question: "Welche Präposition und welchen Fall verlangt das Verb „выйти замуж“?",
+                options: [
+                    "на + Präpositiv",
+                    "за + Akkusativ",
+                    "с + Instrumental",
+                    "за + Instrumental"
+                ],
+                correct: 1 // Index 1 = "за + Akkusativ"
+            },
+            {
+                question: "Welches Verb nutzt ein Mann im Russischen, wenn er ausdrücken will, dass er geheiratet hat?",
+                options: [
+                    "жениться (женить)",
+                    "выходить замуж",
+                    "пожениться",
+                    "бракосочетаться"
+                ],
+                correct: 0
+            },
+            {
+                question: "Welchen Fall verlangt die Konstruktion „женат на...“ (verheiratet mit einer Frau)?",
+                options: [
+                    "Dativ",
+                    "Akkusativ",
+                    "Präpositiv",
+                    "Genitiv"
+                ],
+                correct: 2
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 15; // 15 Sekunden pro Frage
+        const maxTime = 15;
+        let timerInterval = null;
+        let canAnswer = true;
+
+        const quizBox = document.getElementById('quiz-box');
+        const resultBox = document.getElementById('result-box');
+        const progressText = document.getElementById('progress-text');
+        const timerCount = document.getElementById('timer-count');
+        const timerBar = document.getElementById('timer-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsBox = document.getElementById('options-box');
+        const scoreText = document.getElementById('score-text');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            resultBox.classList.add('hidden');
+            quizBox.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            canAnswer = true;
+            timeLeft = maxTime;
+            
+            // UI aktualisieren
+            progressText.textContent = `Frage ${currentQuestionIndex + 1} von ${quizData.length}`;
+            timerCount.textContent = timeLeft;
+            timerBar.style.width = '100%';
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.textContent = currentQuestion.question;
+
+            // Optionen befüllen
+            optionsBox.innerHTML = '';
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('option-btn');
+                button.textContent = option;
+                button.addEventListener('click', () => handleAnswerSelect(index, button));
+                optionsBox.appendChild(button);
+            });
+
+            // Timer starten
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        function updateTimer() {
+            timeLeft -= 0.1;
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                clearInterval(timerInterval);
+                handleTimeOut();
+            }
+            // Zeitanzeige runden und Balken kürzen
+            timerCount.textContent = Math.ceil(timeLeft);
+            timerBar.style.width = `${(timeLeft / maxTime) * 100}%`;
+        }
+
+        function handleAnswerSelect(selectedIndex, selectedButton) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            clearInterval(timerInterval);
+
+            const correctIndex = quizData[currentQuestionIndex].correct;
+            const buttons = optionsBox.querySelectorAll('.option-btn');
+
+            // Deaktiviert alle Buttons, um Mehrfachklicks zu sperren
+            buttons.forEach(btn => btn.setAttribute('disabled', 'true'));
+
+            if (selectedIndex === correctIndex) {
+                selectedButton.classList.add('correct');
+                score++;
+            } else {
+                selectedButton.classList.add('wrong');
+                // Richtige Antwort trotzdem markieren, damit der Schüler lernt
+                buttons[correctIndex].classList.add('correct');
+            }
+
+            // Kurze Denkpause vor der nächsten Frage (1.5 Sekunden)
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function handleTimeOut() {
+            canAnswer = false;
+            const correctIndex = quizData[currentQuestionIndex].correct;
+            const buttons = optionsBox.querySelectorAll('.option-btn');
+            
+            buttons.forEach(btn => btn.setAttribute('disabled', 'true'));
+            // Richtige Antwort nach Zeitablauf einblenden
+            buttons[correctIndex].classList.add('correct');
+
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizBox.classList.add('hidden');
+            resultBox.classList.remove('hidden');
+            scoreText.textContent = `Du hast ${score} von ${quizData.length} Fragen richtig beantwortet.`;
+        }
+
+        restartBtn.addEventListener('click', startQuiz);
+
+        // Quiz beim Laden direkt starten
+        window.onload = startQuiz;
+    </script>
+</body>
+</html>
