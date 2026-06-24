@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Chat-Simulation</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #efeae2; /* Typischer Chat-Hintergrund */
+            --chat-header: #075e54;
+            --bubble-incoming: #ffffff;
+            --bubble-outgoing: #d9fdd3;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: var(--text-color);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--chat-header);
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            margin-bottom: 15px;
+        }
+
+        button.reset-btn {
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button.reset-btn:hover {
+            background-color: #616a6b;
+        }
+
+        /* MESSENGER WINDOW CONTAINER */
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 550px;
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header-bar {
+            background-color: var(--chat-header);
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .chat-avatar {
+            width: 35px;
+            height: 35px;
+            background-color: #ecf0f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* CHAT VERLAUF */
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            position: relative;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-bubble.incoming {
+            background-color: var(--bubble-incoming);
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .message-bubble.outgoing {
+            background-color: var(--bubble-outgoing);
+            align-self: flex-end;
+            border-top-right-radius: 0;
+            animation: popIn 0.3s ease;
+        }
+
+        .translation-hint {
+            display: block;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 2px;
+        }
+
+        /* ANTWORT OPTIONEN */
+        .options-area {
+            background-color: #f0f2f5;
+            padding: 15px;
+            border-top: 1px solid #e1e4e8;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-bubble {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 10px 15px;
+            border-radius: 18px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .option-bubble:hover {
+            background-color: #e2e8f0;
+            border-color: var(--primary-color);
+        }
+
+        .option-bubble.correct {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+
+        .option-bubble.wrong {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @media (min-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .chat-container { height: 600px; }
+            .message-bubble { font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Chat-Simulation</h1>
+        <p style="color: #7f8c8d; font-size: 0.9rem;">Lies den Chat und wähle die logisch und grammatikalisch passende Antwort aus.</p>
+    </header>
+
+    <div class="controls">
+        <button class="reset-btn" id="reset-btn">Neustart</button>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header-bar">
+            <div class="chat-avatar">🤖</div>
+            <div>Maxim (Russisch-Trainer)</div>
+        </div>
+        
+        <div class="chat-body" id="chat-body">
+            <!-- Nachrichten werden hier dynamisch erzeugt -->
+        </div>
+
+        <div class="options-area" id="options-area">
+            <!-- Antwortoptionen werden hier erzeugt -->
+        </div>
+    </div>
+
+    <script>
+        const chatScenarios = [
+            {
+                incoming: "Иван и Анна вместе уже 5 лет. И вот...",
+                hint: "(Ivan und Anna sind schon 5 Jahre zusammen. Und nun...)",
+                options: [
+                    { text: "...вчера они поженились!", isCorrect: true },
+                    { text: "...вчера он женился за Анну!", isCorrect: false }, // Falsche Präposition (за statt на)
+                    { text: "...вчера она вышла замуж на Иване!", isCorrect: false } // Falsche Präposition + Fall
+                ]
+            },
+            {
+                incoming: "Ты слышал новость про Максима?",
+                hint: "(Hast du die Nachricht über Maxim gehört?)",
+                options: [
+                    { text: "Да, он женился на Елене.", isCorrect: true },
+                    { text: "Да, он вышел замуж за Елену.", isCorrect: false }, // Falsches Verb für Männer
+                    { text: "Да, она женилась на Максиме.", isCorrect: false } // Vertauschte Logik/Grammatik
+                ]
+            },
+            {
+                incoming: "Я только что видела Елену в свадебном платье!",
+                hint: "(Ich habe gerade Elena im Brautkleid gesehen!)",
+                options: [
+                    { text: "Ого! Она вышла замуж за Максима?", isCorrect: true },
+                    { text: "Ого! Она женилась на Максима?", isCorrect: false }, // Falsches Verb für Frauen
+                    { text: "Ого! Он женился за Елену?", isCorrect: false } // Falsche Präposition
+                ]
+            }
+        ];
+
+        let currentScenarioIndex = 0;
+        let isAnswered = false;
+
+        const chatBody = document.getElementById('chat-body');
+        const optionsArea = document.getElementById('options-area');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function initChat() {
+            chatBody.innerHTML = "";
+            optionsArea.innerHTML = "";
+            currentScenarioIndex = 0;
+            isAnswered = false;
+            loadScenario();
+        }
+
+        function loadScenario() {
+            isAnswered = false;
+            optionsArea.innerHTML = "";
+            
+            if (currentScenarioIndex >= chatScenarios.length) {
+                // Ende der Simulation erreicht
+                createIncomingBubble("Отлично! Ты успешно завершил чат-симуляцию! 🏆", "(Ausgezeichnet! Du hast die Chat-Simulation erfolgreich beendet!)");
+                return;
+            }
+
+            const currentScenario = chatScenarios[currentScenarioIndex];
+            
+            // Partner-Nachricht anzeigen
+            createIncomingBubble(currentScenario.incoming, currentScenario.hint);
+
+            // Antwortoptionen anzeigen (gemischt)
+            const shuffledOptions = [...currentScenario.options].sort(() => Math.random() - 0.5);
+            
+            shuffledOptions.forEach(opt => {
+                const optBtn = document.createElement('div');
+                optBtn.classList.add('option-bubble');
+                optBtn.textContent = opt.text;
+                optBtn.addEventListener('click', () => handleOptionSelection(optBtn, opt));
+                optionsArea.appendChild(optBtn);
+            });
+        }
+
+        function createIncomingBubble(text, hintText) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble', 'incoming');
+            bubble.textContent = text;
+            
+            if (hintText) {
+                const hint = document.createElement('span');
+                hint.classList.add('translation-hint');
+                hint.textContent = hintText;
+                bubble.appendChild(hint);
+            }
+            
+            chatBody.appendChild(bubble);
+            scrollToBottom();
+        }
+
+        function createOutgoingBubble(text) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble', 'outgoing');
+            bubble.textContent = text;
+            chatBody.appendChild(bubble);
+            scrollToBottom();
+        }
+
+        function handleOptionSelection(element, option) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            // Alle Optionen sperren und stylen
+            const allOptions = optionsArea.querySelectorAll('.option-bubble');
+            
+            if (option.isCorrect) {
+                element.classList.add('correct');
+                createOutgoingBubble(option.text);
+                
+                currentScenarioIndex++;
+                // Nächstes Szenario nach kurzer Pause laden
+                setTimeout(() => {
+                    loadScenario();
+                }, 1500);
+            } else {
+                element.classList.add('wrong');
+                
+                // Richtige Option visuell hervorheben
+                allOptions.forEach((btn, index) => {
+                    // Sucht die korrekte Option im DOM
+                    const currentScenario = chatScenarios[currentScenarioIndex];
+                    const correctText = currentScenario.options.find(o => o.isCorrect).text;
+                    if (btn.textContent === correctText) {
+                        btn.classList.add('correct');
+                    }
+                });
+
+                // Nach Fehler kann der Schüler durch "Neustart" von vorn beginnen oder die richtige Antwort sehen
+                setTimeout(() => {
+                    currentScenarioIndex++;
+                    loadScenario();
+                }, 2500);
+            }
+        }
+
+        function scrollToBottom() {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        resetBtn.addEventListener('click', initChat);
+
+        // Beim ersten Laden starten
+        window.onload = initChat;
+    </script>
+</body>
+</html>
