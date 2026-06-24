@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Kreuzworträtsel mit Echtzeit-Feedback</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --cell-size: 35px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        p.instruction {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+        }
+
+        .controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button.control-btn {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .reset-btn {
+            background-color: #95a5a6;
+        }
+
+        .reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        .reveal-btn {
+            background-color: #e67e22;
+        }
+
+        .reveal-btn:hover {
+            background-color: #d35400;
+        }
+
+        .game-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 750px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            align-items: center;
+        }
+
+        /* DAS KREUZWORTRÄTSEL-GRID */
+        .grid-container {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(11, var(--cell-size));
+            grid-template-rows: repeat(10, var(--cell-size));
+            gap: 1px;
+            background-color: #cbd5e1;
+            padding: 2px;
+            border-radius: 4px;
+            overflow: auto;
+            max-width: 100%;
+        }
+
+        .cell {
+            background-color: #1e293b; /* Dunkel/Inaktiv */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .cell.active {
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+
+        /* Farbliches direktes Feedback für die Zelle */
+        .cell.active.correct-letter {
+            background-color: #e8f8f0 !important; /* Helles Grün */
+        }
+
+        .cell.active.wrong-letter {
+            background-color: #fdedec !important; /* Helles Rot */
+        }
+
+        .cell.selected {
+            background-color: #bae6fd !important; /* Blau markiert */
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--text-color);
+            pointer-events: none;
+        }
+
+        /* Textfarben-Feedback */
+        .correct-letter .cell-input {
+            color: var(--success-color);
+        }
+
+        .wrong-letter .cell-input {
+            color: var(--error-color);
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        /* HINWEIS-LISTEN */
+        .clues-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .clue-section h3 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .clue-list {
+            list-style: none;
+            font-size: 0.95rem;
+        }
+
+        .clue-item {
+            margin-bottom: 4px;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .clue-item.highlighted {
+            background-color: #f0f9ff;
+            font-weight: 600;
+        }
+
+        /* VIRTUELLE TASTATUR */
+        .virtual-keyboard {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .key {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            min-width: 38px;
+            height: 42px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .key:active {
+            background: #e2e8f0;
+            transform: scale(0.95);
+        }
+
+        .key.action-key {
+            background: #e2e8f0;
+            font-size: 0.9rem;
+            padding: 0 12px;
+        }
+
+        #feedback {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        @media (min-width: 480px) {
+            :root { --cell-size: 42px; }
+            .clues-container { flex-direction: row; }
+            .clue-section { flex: 1; }
+        }
+
+        @media (min-width: 768px) {
+            h1 { font-size: 2rem; }
+            :root { --cell-size: 46px; }
+            .game-layout { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Kreuzworträtsel</h1>
+        <p class="instruction">Tippe auf ein weißes Feld. Falsche Buchstaben werden sofort <span style="color: var(--error-color); font-weight: bold;">rot</span>, richtige <span style="color: var(--success-color); font-weight: bold;">grün</span> gefärbt!</p>
+    </header>
+
+    <div class="controls">
+        <button class="control-btn reset-btn" id="reset-btn">Neustart</button>
+        <button class="control-btn reveal-btn" id="reveal-btn">Lösung anzeigen</button>
+    </div>
+
+    <div class="game-layout">
+        <div class="grid-container" id="grid-container"></div>
+        <div id="feedback"></div>
+        <div class="virtual-keyboard" id="keyboard"></div>
+
+        <div class="clues-container">
+            <div class="clue-section">
+                <h3>Waagerecht (→)</h3>
+                <ul class="clue-list" id="clues-across">
+                    <li class="clue-item" data-word="1"><b>1</b> er hat geheiratet (ж...)</li>
+                    <li class="clue-item" data-word="3"><b>3</b> sie haben geheiratet (п...)</li>
+                </ul>
+            </div>
+            <div class="clue-section">
+                <h3>Senkrecht (↓)</h3>
+                <ul class="clue-list" id="clues-down">
+                    <li class="clue-item" data-word="2"><b>2</b> sie ist ein Risiko eingegangen / hat geheiratet (в...)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gridWidth = 11;
+        const gridHeight = 10;
+
+        // Speicherstruktur für die korrekten Buchstaben je Koordinate
+        let solutionMap = {}; 
+
+        const words = {
+            "1": { id: 1, dir: "across", x: 1, y: 2, answer: "ЖЕНИЛСЯ", cellNum: 1 },
+            "2": { id: 2, dir: "down",   x: 4, y: 0, answer: "ВЫШЛАЗАМУЖ", cellNum: 2 },
+            "3": { id: 3, dir: "across", x: 0, y: 7, answer: "ПОЖЕНИЛИСЬ", cellNum: 3 }
+        };
+
+        const allowedLetters = ["А", "В", "Е", "Ж", "З", "И", "Л", "М", "Н", "О", "П", "С", "У", "Ы", "Я"];
+        let selectedCell = null;
+
+        const gridContainer = document.getElementById('grid-container');
+        const keyboard = document.getElementById('keyboard');
+        const resetBtn = document.getElementById('reset-btn');
+        const revealBtn = document.getElementById('reveal-btn');
+        const feedback = document.getElementById('feedback');
+
+        function initGame() {
+            gridContainer.innerHTML = "";
+            feedback.textContent = "";
+            selectedCell = null;
+            solutionMap = {};
+            
+            // Lösungs-Map vorab befüllen
+            for (let key in words) {
+                const w = words[key];
+                for (let i = 0; i < w.answer.length; i++) {
+                    let targetX = w.x + (w.dir === 'across' ? i : 0);
+                    let targetY = w.y + (w.dir === 'down' ? i : 0);
+                    solutionMap[`${targetX},${targetY}`] = w.answer[i];
+                }
+            }
+
+            buildGrid();
+            buildKeyboard();
+            highlightClues();
+        }
+
+        function buildGrid() {
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+
+                    let associatedWords = [];
+                    let cellNumToDisplay = null;
+
+                    for (let key in words) {
+                        const w = words[key];
+                        if (w.dir === "across" && y === w.y && x >= w.x && x < w.x + w.answer.length) {
+                            associatedWords.push(key);
+                            if (x === w.x && y === w.y) cellNumToDisplay = w.cellNum;
+                        }
+                        if (w.dir === "down" && x === w.x && y >= w.y && y < w.y + w.answer.length) {
+                            associatedWords.push(key);
+                            if (x === w.x && y === w.y) cellNumToDisplay = w.cellNum;
+                        }
+                    }
+
+                    if (associatedWords.length > 0) {
+                        cell.classList.add('active');
+                        cell.dataset.words = associatedWords.join(',');
+
+                        const input = document.createElement('input');
+                        input.classList.add('cell-input');
+                        input.maxLength = 1;
+                        cell.appendChild(input);
+
+                        if (cellNumToDisplay) {
+                            const numSpan = document.createElement('span');
+                            numSpan.classList.add('cell-number');
+                            numSpan.textContent = cellNumToDisplay;
+                            cell.appendChild(numSpan);
+                        }
+
+                        cell.addEventListener('click', () => selectCell(cell));
+                    }
+
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function buildKeyboard() {
+            keyboard.innerHTML = "";
+            allowedLetters.forEach(letter => {
+                const key = document.createElement('button');
+                key.classList.add('key');
+                key.textContent = letter;
+                key.addEventListener('click', () => handleKeyPress(letter));
+                keyboard.appendChild(key);
+            });
+
+            const deleteKey = document.createElement('button');
+            deleteKey.classList.add('key', 'action-key');
+            deleteKey.textContent = "⌫ Löschen";
+            deleteKey.addEventListener('click', () => handleKeyPress('DELETE'));
+            keyboard.appendChild(deleteKey);
+        }
+
+        function selectCell(cell) {
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+            }
+            selectedCell = cell;
+            selectedCell.classList.add('selected');
+            highlightClues();
+        }
+
+        function handleKeyPress(key) {
+            if (!selectedCell) return;
+
+            const input = selectedCell.querySelector('.cell-input');
+            const coordKey = `${selectedCell.dataset.x},${selectedCell.dataset.y}`;
+            const correctLetter = solutionMap[coordKey];
+
+            // Reset des alten Feedbacks für dieses Feld
+            selectedCell.classList.remove('correct-letter', 'wrong-letter');
+
+            if (key === 'DELETE') {
+                input.value = "";
+            } else {
+                input.value = key;
+                
+                // DIREKTES FEEDBACK AUSWERTEN
+                if (key === correctLetter) {
+                    selectedCell.classList.add('correct-letter');
+                } else {
+                    selectedCell.classList.add('wrong-letter');
+                }
+                
+                // Automatisch weiterrücken
+                advanceFocus();
+            }
+            checkFullPuzzle();
+        }
+
+        function advanceFocus() {
+            if (!selectedCell) return;
+            const currentX = parseInt(selectedCell.dataset.x);
+            const currentY = parseInt(selectedCell.dataset.y);
+            
+            const activeWords = selectedCell.dataset.words.split(',');
+            const primaryWordKey = activeWords[0];
+            const dir = words[primaryWordKey].dir;
+
+            let nextX = currentX + (dir === 'across' ? 1 : 0);
+            let nextY = currentY + (dir === 'down' ? 1 : 0);
+
+            const nextCell = document.querySelector(`.cell.active[data-x="${nextX}"][data-y="${nextY}"]`);
+            if (nextCell) {
+                selectCell(nextCell);
+            }
+        }
+
+        function highlightClues() {
+            document.querySelectorAll('.clue-item').forEach(item => item.classList.remove('highlighted'));
+            if (!selectedCell) return;
+
+            const activeWords = selectedCell.dataset.words.split(',');
+            activeWords.forEach(wordId => {
+                const clueItem = document.querySelector(`.clue-item[data-word="${wordId}"]`);
+                if (clueItem) clueItem.classList.add('highlighted');
+            });
+        }
+
+        // Prüft, ob das gesamte Rätsel fehlerfrei beendet wurde
+        function checkFullPuzzle() {
+            const activeCells = document.querySelectorAll('.cell.active');
+            let totalCorrect = 0;
+
+            activeCells.forEach(cell => {
+                if (cell.classList.contains('correct-letter')) {
+                    totalCorrect++;
+                }
+            });
+
+            if (totalCorrect === activeCells.length) {
+                feedback.textContent = "Unglaublich! Alles komplett richtig gelöst! 🏆";
+                feedback.style.color = "var(--success-color)";
+            } else {
+                feedback.textContent = "";
+            }
+        }
+
+        function revealSolution() {
+            const activeCells = document.querySelectorAll('.cell.active');
+            
+            activeCells.forEach(cell => {
+                const coordKey = `${cell.dataset.x},${cell.dataset.y}`;
+                const input = cell.querySelector('.cell-input');
+                
+                input.value = solutionMap[coordKey];
+                cell.classList.remove('wrong-letter');
+                cell.classList.add('correct-letter');
+            });
+
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+                selectedCell = null;
+            }
+            highlightClues();
+            feedback.textContent = "Die Lösung wurde angezeigt! Versuche es beim nächsten Mal ohne Hilfe. 😉";
+            feedback.style.color = "var(--primary-color)";
+        }
+
+        resetBtn.addEventListener('click', initGame);
+        revealBtn.addEventListener('click', revealSolution);
+        window.onload = initGame;
+    </script>
+</body>
+</html>
