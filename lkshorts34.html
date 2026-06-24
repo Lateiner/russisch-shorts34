@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Interaktive Lernkartei</title>
+    <style>
+        :root {
+            --bg-color: #f0f7f4;
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #e8f5e9;
+            --text-color: #2c3e50;
+            --shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #556b2f;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* FORTSCHRITTSANZEIGE */
+        .progress-indicator {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(46, 125, 50, 0.1);
+            padding: 4px 12px;
+            border-radius: 15px;
+        }
+
+        /* 3D-FLIP-EFFEKT KARTEIKARTE */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 280px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow);
+            border-radius: 15px;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-side {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid rgba(46, 125, 50, 0.15);
+        }
+
+        .card-front {
+            background-color: var(--card-front-bg);
+            color: var(--text-color);
+        }
+
+        .card-back {
+            background-color: var(--card-back-bg);
+            transform: rotateY(180deg);
+            color: var(--primary-dark);
+        }
+
+        /* TEXTSKELETT INNERHALB DER KARTE */
+        .card-text {
+            font-weight: bold;
+            line-height: 1.3;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .card-front .card-text {
+            color: #000000;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            font-weight: normal;
+            color: #555555;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .hint-click {
+            position: absolute;
+            bottom: 10px;
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* BEDIENELEMENTE / BUTTONS */
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button.btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button.btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        button.btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background-color: #689f38;
+        }
+        .btn-secondary:hover {
+            background-color: #558b2f;
+        }
+
+        .nav-btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* HINWEISE FÜR KEYBOARD */
+        .keyboard-hints {
+            display: none;
+            font-size: 0.8rem;
+            color: #718096;
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* RESPONSIVE ANPASSUNGEN */
+        @media (min-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .flashcard-container { height: 320px; }
+            .keyboard-hints { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Russisch-Lernkartei</h1>
+        <div class="subtitle">Thema: Eheschließung & Beziehungen</div>
+    </header>
+
+    <div class="main-container">
+        <!-- Fortschritt -->
+        <div class="progress-indicator" id="progress">1 / 20</div>
+
+        <!-- Karteikarte -->
+        <div class="flashcard-container" id="card-container" tabindex="0" aria-label="Karteikarte. Zum Umdrehen klicken oder Leertaste drücken.">
+            <div class="flashcard" id="card">
+                <!-- Vorderseite (Russisch) -->
+                <div class="card-side card-front">
+                    <div class="card-text" id="text-front">Загрузка...</div>
+                    <div class="hint-click">Klicken zum Umdrehen</div>
+                </div>
+                <!-- Rückseite (Deutsch) -->
+                <div class="card-side card-back">
+                    <div class="card-text" id="text-back">Laden...</div>
+                    <div class="card-note" id="note-back"></div>
+                    <div class="hint-click">Klicken zum Umdrehen</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hauptnavigation (Vor / Zurück) -->
+        <div class="controls-row">
+            <button class="btn nav-btn" id="btn-prev">← Vorherige</button>
+            <button class="btn nav-btn" id="btn-next">Nächste →</button>
+        </div>
+
+        <!-- Sonderfunktionen -->
+        <div class="controls-row">
+            <button class="btn btn-secondary" id="btn-start">An den Anfang</button>
+            <button class="btn btn-secondary" id="btn-shuffle">🔀 Mischen</button>
+        </div>
+
+        <!-- Tastaturbelegungs-Tipps für Desktop -->
+        <div class="keyboard-hints">
+            Steuerung per Tastatur möglich:<br>
+            <b>Leertaste / Enter</b>: Umdrehen | <b>Pfeiltasten ← / →</b>: Navigation | <b>Pos1 (Home)</b>: Start
+        </div>
+    </div>
+
+    <script>
+        // Rohdaten der Vokabelliste basierend auf der Vorgabe
+        const initialDataset = [
+            { front: "жени́ться / пожени́ться", back: "heiraten", note: "(Vorgang allgemein oder für den Mann; im Plural: sich verheiraten)" },
+            { front: "выходи́ть / вы́йти за́муж", back: "heiraten", note: "(nur für die Frau; wörtlich: hinter einen Mann gehen)" },
+            { front: "выходи́ть / вы́йти за́муж за (+ Akkusativ)", back: "heiraten", note: "(jemanden, bezogen auf die Frau)" },
+            { front: "жени́ться на (+ Präpositiv)", back: "verheiratet sein mit / heiraten", note: "(jemanden, bezogen auf den Mann)" },
+            { front: "жена́тый", back: "verheiratet", note: "(nur für einen Mann)" },
+            { front: "за́мужняя", back: "verheiratet", note: "(nur für eine Frau)" },
+            { front: "же́них", back: "Bräutigam", note: "" },
+            { front: "неве́ста", back: "Braut", note: "" },
+            { front: "сва́дьба", back: "Hochzeit", note: "" },
+            { front: "брак", back: "Ehe", note: "" },
+            { front: "супру́г", back: "Ehegatte / Ehemann", note: "" },
+            { front: "супру́га", back: "Ehegattin / Ehefrau", note: "" },
+            { front: "муж", back: "Ehemann", note: "" },
+            { front: "жена́", back: "Ehefrau", note: "" },
+            { front: "рискова́ть / рискну́ть", back: "riskieren / ein Risiko eingehen", note: "" },
+            { front: "создава́ть / созда́ть се́мью", back: "eine Familie gründen", note: "" },
+            { front: "предлага́ть / предложи́ть ру́ку и се́рдце", back: "einen Heiratsantrag machen", note: "(wörtlich: Hand und Herz anbieten)" },
+            { front: "любить / полюбе́ть", back: "lieben / sich verlieben", note: "" },
+            { front: "регистри́ровать / зарегистри́ровать брак", back: "die Ehe registrieren lassen", note: "(standesamtlich heiraten)" },
+            { front: "загс (Запись актов гражданского состояния)", back: "Standesamt", note: "" }
+        ];
+
+        // Aktuell aktiver Stapel (kann gemischt werden)
+        let currentDeck = [...initialDataset];
+        let currentIndex = 0;
+
+        // DOM-Elemente holen
+        const cardContainer = document.getElementById('card-container');
+        const card = document.getElementById('card');
+        const textFront = document.getElementById('text-front');
+        const textBack = document.getElementById('text-back');
+        const noteBack = document.getElementById('note-back');
+        const progressIndicator = document.getElementById('progress');
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnStart = document.getElementById('btn-start');
+        const btnShuffle = document.getElementById('btn-shuffle');
+
+        // Funktion: Karte aktualisieren und anzeigen
+        function updateCardDisplay() {
+            // Karte vor dem Text-Wechsel immer erst zurückdrehen (Vorderseite zeigen)
+            card.classList.remove('flipped');
+
+            // Kurzer Timeout, damit der Textwechsel unsichtbar während des Zurückdrehens passiert
+            setTimeout(() => {
+                const currentItem = currentDeck[currentIndex];
+                textFront.textContent = currentItem.front;
+                textBack.textContent = currentItem.back;
+                
+                if(currentItem.note) {
+                    noteBack.textContent = currentItem.note;
+                    noteBack.style.display = "block";
+                } else {
+                    noteBack.style.display = "none";
+                }
+
+                // Dynamische Schriftgrößenanpassung gegen Überlaufen
+                adjustFontSize(textFront, currentItem.front.length);
+                adjustFontSize(textBack, currentItem.back.length + currentItem.note.length);
+
+                // Fortschritt anzeigen
+                progressIndicator.textContent = `${currentIndex + 1} / ${currentDeck.length}`;
+            }, 150);
+        }
+
+        // Hilfsfunktion zur Skalierung langer Texte
+        function adjustFontSize(element, textLength) {
+            if (textLength > 50) {
+                element.style.fontSize = "1.15rem";
+            } else if (textLength > 25) {
+                element.style.fontSize = "1.4rem";
+            } else {
+                element.style.fontSize = "1.8rem";
+            }
+        }
+
+        // Funktion: Karte umdrehen (Flip Toggle)
+        function toggleFlip() {
+            card.classList.toggle('flipped');
+        }
+
+        // Navigation: Vorwärts
+        function goNext() {
+            if (currentIndex < currentDeck.length - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0; // Am Ende fängt es von vorne an (Loop)
+            }
+            updateCardDisplay();
+        }
+
+        // Navigation: Rückwärts
+        function goPrev() {
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = currentDeck.length - 1; // Am Anfang springt es ans Ende
+            }
+            updateCardDisplay();
+        }
+
+        // Navigation: Zurück zum Start
+        function goFirst() {
+            currentIndex = 0;
+            updateCardDisplay();
+        }
+
+        // Funktion: Stapel mischen (Fisher-Yates-Verfahren)
+        function shuffleDeck() {
+            for (let i = currentDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+            }
+            goFirst();
+        }
+
+        // ---- EVENT LISTENERS INTERAKTIVITÄT ----
+
+        // Klick auf Karte dreht sie um
+        cardContainer.addEventListener('click', toggleFlip);
+
+        // Buttons binden
+        btnNext.addEventListener('click', goNext);
+        btnPrev.addEventListener('click', goPrev);
+        btnStart.addEventListener('click', goFirst);
+        btnShuffle.addEventListener('click', shuffleDeck);
+
+        // Tastatursteuerung implementieren
+        document.addEventListener('keydown', (event) => {
+            // Verhindert das Scrollen der Seite bei Leertaste oder Pfeiltasten, während man lernt
+            if (["Space", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home"].includes(event.key)) {
+                event.preventDefault();
+            }
+
+            switch(event.key) {
+                case " ":
+                case "Spacebar": // ältere Browser
+                case "Enter":
+                    toggleFlip();
+                    break;
+                case "ArrowRight":
+                    goNext();
+                    break;
+                case "ArrowLeft":
+                    goPrev();
+                    break;
+                case "Home":
+                    goFirst();
+                    break;
+            }
+        });
+
+        // App-Initialisierung beim Starten der Seite
+        window.onload = () => {
+            updateCardDisplay();
+        };
+    </script>
+</body>
+</html>
